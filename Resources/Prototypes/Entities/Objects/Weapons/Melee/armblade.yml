@@ -67,11 +67,11 @@
     state: icon
   - type: MeleeWeapon
     wideAnimationRotation: 90
-    attackRate: 0.75
+    attackRate: 0.65
     damage:
       types:
-        Slash: 25
-        Piercing: 15
+        Slash: 20
+        Piercing: 10
   - type: Item
     size: Normal
     sprite: Objects/Weapons/Melee/armblade.rsi
