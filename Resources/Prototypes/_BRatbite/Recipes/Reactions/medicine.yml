@@ -1,0 +1,29 @@
+- type: reaction
+  id: Teriparatide
+  reactants:
+    Tramadol:
+      amount: 1
+    Bicaridine:
+      amount: 1
+    Protein:
+      amount: 0.25
+    Plasma:
+      amount: 1
+      catalyst: true
+  products:
+    Teriparatide: 4
+
+- type: reaction
+  id: Ketamine
+  reactants:
+    Tramadol:
+      amount: 1
+    SpaceDrugs:
+      amount: 1
+    Ephedrine:
+      amount: 1
+    Acetone:
+      amount: 0.5
+      catalyst: true
+  products:
+    Ketamine: 3
