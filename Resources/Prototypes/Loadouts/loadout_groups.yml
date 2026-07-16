@@ -843,6 +843,8 @@
   - MusicianJumpskirt
   - ServiceMJ # goob
   - TacticoolJumpsuit
+  - PerformerSkirtRed
+  - PerformerSkirtYellow
   - TacticoolJumpskirt
 
 - type: loadoutGroup
