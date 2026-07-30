@@ -137,6 +137,10 @@ namespace Content.Shared.Lathe
         [DataField, ViewVariables(VVAccess.ReadWrite)]
         public bool OutputToStorage = false;
         // Goobstation change end
+
+        // Ratbite, limit queue to a max length
+        [DataField]
+        public int MaxQueueLength = 300;
     }
 
     public sealed class LatheGetRecipesEvent : EntityEventArgs
@@ -160,4 +164,8 @@ namespace Content.Shared.Lathe
     /// </summary>
     [ByRefEvent]
     public readonly record struct LatheStartPrintingEvent(LatheRecipePrototype Recipe);
+
+    // Ratbite: Event raised on a lathe when it finishes printing
+    [ByRefEvent]
+    public readonly record struct LatheFinishPrintingEvent(LatheRecipePrototype Recipe, EntityUid? SpawnedEntity);
 }

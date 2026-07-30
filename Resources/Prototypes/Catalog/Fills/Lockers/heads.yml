@@ -174,6 +174,7 @@
     - id: SalvageJobBoardComputerCircuitboard # Goobstation - This doesn't really have a use right now but it's there incase it ever gets use again
     - id: CargoMegaphone # goob - loudspeaker
     - id: SlotMachineHighRollerFlatPack # Goob - gambling
+    - id: PanicButtonCargo # Ratbite
 
 - type: entity
   id: LockerQuarterMasterFilled
@@ -281,8 +282,6 @@
     - id: BoxPDA
     - id: CigarGoldCase
       prob: 0.25
-      # Fuck the HoP they don't deserve fucking cigars.
-      # Yes they do fuck you.
     - id: ClothingBackpackIan
       prob: 0.5
     - id: ClothingHeadsetAltCommand # Goobstation
@@ -297,8 +296,7 @@
     - id: RubberStampHop
     - id: WeaponDisabler
     - id: ClothingEyesHudCommand
-    - id: ServiceTechFabCircuitboard # Goobstation - Service Techfab
-    - id: CommandMegaphone # goob - loudspeakers
+    - id: ReinforcementCallerHoP # Trauma
 
 - type: entity
   id: LockerHeadOfPersonnelFilled
@@ -332,6 +330,8 @@
     - id: RubberStampCE
     - id: MetalFoamGrenade
     # Goobstation V
+    - id: SupermatterComputerCircuitboard
+    - id: BaseHandheldStationMapSupermatterCe
     - id: BaseHandheldStationMapPowerCe
     - id: EngineeringTechFabCircuitboard
  #  - id: CartridgeRocketSingularityBuster
@@ -339,6 +339,7 @@
  #  - id: WeaponLauncherSingularityBuster
     - id: MachinePowerTransmissionLaserFlatpack
     - id: RCDRechargingCE
+    - id: PanicButtonEngineering # Ratbite
 
 # Hardsuit table, used for suit storage as well
 - type: entityTable
@@ -416,6 +417,7 @@
     - id: DiseaseDiagnoserFlatPack
     - id: VaccinatorFlatPack
     # Goobstation End
+    - id: PanicButtonMedical # Ratbite
 
 # Hardsuit table, used for suit storage as well
 - type: entityTable
@@ -477,6 +479,7 @@
    #- id: ClothingBeltGeminiHoloProjector # Goobstation - Who better to do science with than yourself?
     - id: XenobiologyBountyComputerCircuitboard # Goobstation
     - id: MMI # Goobstation
+    - id: PanicButtonScience # Ratbite
 
 # Hardsuit table, used for suit storage as well
 - type: entityTable
@@ -538,7 +541,8 @@
   # - id: ComputerCargoRequestSecurityFlatpack # Goobstation
     - id: WantedListCartridge
     - id: DrinkHosFlask
-    - id: ClothingBeltSheathHeadOfSecurityFilled # Goobstation - security revamp
+  # - id: ClothingBeltSheathHeadOfSecurityFilled # Goobstation - security revamp # ratbite moved to loadout
+    - id: ReinforcementCallerHos # Trauma
 
 # Hardsuit table, used for suit storage as well
 - type: entityTable

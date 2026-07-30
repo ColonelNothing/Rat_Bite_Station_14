@@ -639,7 +639,7 @@
     count: 1
 
 - type: entity
-  parent: MaterialBase
+  parent: [MaterialBase, BaseMajorContraband] # Ratbite: contraband changes
   id: MaterialBananium
   name: bananium
   suffix: Full
@@ -690,6 +690,7 @@
     heldPrefix: bananium
   - type: RadiationSource # Goobstation - ITS BACK
     intensity: 0.1
+    isWeakSource: true # ratbite, thick skin component
 
 - type: entity
   parent: MaterialBananium
