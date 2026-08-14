@@ -843,9 +843,30 @@
   - MusicianJumpskirt
   - ServiceMJ # goob
   - TacticoolJumpsuit
+  - TacticoolJumpskirt
+# Moffstation - Begin - Musician Outfits
+  - PerformerSkirt
   - PerformerSkirtRed
   - PerformerSkirtYellow
-  - TacticoolJumpskirt
+# Moffstation - End - Musician Outfits
+
+- type: loadoutGroup
+  id: MusicianHead
+  name: loadout-group-musician-head
+  minLimit: 0
+  loadouts:
+  - PerformerWig
+  - PerformerWigRed
+  - PerformerWigYellow
+  - RockstarWig
+
+- type: loadoutGroup
+  id: MusicianShoes
+  name: loadout-group-musician-shoes
+  loadouts:
+  - PerformerShoes
+  - PerformerShoesRed
+  - PerformerShoesYellow
 
 - type: loadoutGroup
   id: MusicianOuterClothing

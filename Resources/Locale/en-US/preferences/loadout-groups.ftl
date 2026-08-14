@@ -107,8 +107,10 @@ loadout-group-mime-backpack = Mime backpack
 loadout-group-mime-outerclothing = Mime outer clothing
 loadout-group-mime-belt = Mime belt
 
+loadout-group-musician-head = Musician head
 loadout-group-musician-jumpsuit = Musician jumpsuit
 loadout-group-musician-outerclothing = Musician outer clothing
+loadout-group-musician-shoes = Musician shoes
 
 # Cargo
 loadout-group-quartermaster-head = Quartermaster head
