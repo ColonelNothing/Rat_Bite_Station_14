@@ -1,17 +1,8 @@
-# SPDX-FileCopyrightText: 2025 Armok <155400926+ARMOKS@users.noreply.github.com>
-# SPDX-FileCopyrightText: 2025 Aviu00 <93730715+Aviu00@users.noreply.github.com>
-# SPDX-FileCopyrightText: 2025 Aviu00 <aviu00@protonmail.com>
-# SPDX-FileCopyrightText: 2025 GoobBot <uristmchands@proton.me>
-# SPDX-FileCopyrightText: 2025 IrisTheAmped <iristheamped@gmail.com>
-# SPDX-FileCopyrightText: 2025 Solstice <solsticeofthewinter@gmail.com>
-# SPDX-FileCopyrightText: 2025 Ted Lukin <66275205+pheenty@users.noreply.github.com>
-# SPDX-FileCopyrightText: 2025 pheenty <fedorlukin2006@gmail.com>
-#
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 - type: entity
   name: DT-2
-  parent: [BaseItem,]
+  parent: BaseItem
   id: Justice
   description: An expensive & self-recharging energy sword, designed for high ranking members of security. It deals more damage to unruly prisoners.
   components:
@@ -26,9 +17,7 @@
     maxCharge: 1000
     startingCharge: 1000
   - type: BatterySelfRecharger
-    autoRecharge: true
     autoRechargeRate: 50
-    autoRechargePause: true
     autoRechargePauseTime: 40
   - type: DisarmMalus
   - type: Tag
@@ -42,6 +31,7 @@
   - type: Sharp
   - type: Execution
     doAfterDuration: 4.0
+  - type: HosSaber
   - type: MeleeWeapon
     wideAnimationRotation: -135
     attackRate: 1.5
@@ -71,10 +61,11 @@
       - Alive
   - type: StealTarget
     stealGroup: WeaponSecHeadSword
-    # Ratbite: give weapon buff against perma prisoners
-  - type: HosSaber
-    # This is a 3% multiplicative buff per every hour of sentence.
-    damageMultiplierPerMinute: 0.0005
+  - type: IntrinsicRadioReceiver
+  - type: ActiveRadio
+    channels:
+    - Common
+    - Security
   - type: ItemSwitch
     needsPower: true
     defaultState: off

@@ -12,11 +12,15 @@
     state: construction-1
   - type: Item
     size: Normal
-    sprite: Clothing/Head/Helmets/scrap_helmet.rsi
+    sprite: Objects/Tools/bucket.rsi #Goobstation
   - type: Construction
     graph: scraphelmet
     node: wiredbucket
-
+  - type: Clothing # Goobstation
+    sprite: Objects/Tools/bucket.rsi
+    slots:
+    - HEAD
+    quickEquip: false
 - type: entity
   name: sliced bucket
   parent: BaseItem
@@ -28,11 +32,15 @@
     state: construction-2
   - type: Item
     size: Normal
-    sprite: Clothing/Head/Helmets/scrap_helmet.rsi
+    sprite: Objects/Tools/bucket.rsi #Goobstation
   - type: Construction
     graph: scraphelmet
     node: slicedbucket
-
+  - type: Clothing # Goobstation
+    sprite: Objects/Tools/bucket.rsi
+    slots:
+    - HEAD
+    quickEquip: false
 - type: entity
   name: steel bucket
   parent: BaseItem

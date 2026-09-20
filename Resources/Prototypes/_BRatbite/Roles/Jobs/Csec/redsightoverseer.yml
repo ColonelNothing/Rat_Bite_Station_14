@@ -1,7 +1,7 @@
 - type: job
   id: RedsightOverseer
-  name: Redsight Overseer
-  description: "Ensure security's compliance with spacelaw, act as the judge in legal disputes"
+  name: job-name-redsight-overseer
+  description: job-description-redsight-overseer
   playTimeTracker: JobRedsightOverseer
   requirements:
     - !type:DepartmentTimeRequirement
@@ -20,11 +20,21 @@
       species:
       - Felinid
       - Scurret
-  goobcoins: 45
+      - Monkey
+      - Kobold
+    - !type:TraitsRequirement # Ratbite: No NRP traits
+      inverted: true
+      traits:
+      - Trigger
+      - SocialAnxietyTrait
+      - ChronicKleptomania
+      - Nudist
+      - Stowaway
+  goobcoins: 60
   weight: 20
   startingGear: RSOGear
   icon: "JobIconRSO"
-  supervisors: job-supervisors-centcom job-supervisors-hos
+  supervisors: job-supervisors-centcom-hos
   canBeAntag: false
   access:
   - CentralCommand
@@ -46,7 +56,6 @@
       - type: CommandStaff
       - type: Condemned
         soulOwnedNotDevil: true
-      - type: CombatTrained # ratbite
 
 - type: startingGear
   id: RSOGear
@@ -59,7 +68,7 @@
     pocket1: ClothingMaskGasSecurity
   storage:
     back:
-    - KravMagaImplant
+    - KravMagaImplanter
     - BookSpaceLaw
     - Flash
     - RSOUndeterminedWeapon
@@ -80,4 +89,3 @@
     outerClothing: RSOJack
     gloves: ClothingHandsGlovesRSOShock
     shoes: ClothingShoesBootsJack
-

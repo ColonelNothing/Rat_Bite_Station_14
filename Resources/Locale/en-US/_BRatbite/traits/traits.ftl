@@ -13,7 +13,7 @@ trait-sneak-desc = You feel more sneaky.
 
 trait-loyalty-training-name = NanoTrasen Loyalty Training
 trait-loyalty-training-desc =
-    You start with a mindshield implant. Normal mindshield rules apply.
+    You received extensive loyalty training, start with a mindshield and cannot be an antagonist. Normal mindshield rules apply.
 
 trait-pct-training-name = PCT Training
 trait-pct-training-desc =
@@ -75,3 +75,9 @@ gun-fail-shoot = Your hands tremble and you were unable to shoot.
 
 trait-stowaway-name = Stowaway
 trait-stowaway-desc = You weren't mean to be on this ship, but you are here anyways and have to survive.
+
+trait-nude-name = Vestiphobia
+trait-nude-description = You have an irrational fear of clothing, and are slower when wearing them
+
+trait-trigger-name = Trigger
+trait-trigger-desc = Careful examination of your internals may cause you to explode

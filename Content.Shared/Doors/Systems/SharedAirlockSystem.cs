@@ -1,22 +1,3 @@
-// SPDX-FileCopyrightText: 2022 Leon Friedrich <60421075+ElectroJr@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2022 WlarusFromDaSpace <44726328+WlarusFromDaSpace@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2022 wrexbe <81056464+wrexbe@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2023 DrSmugleaf <DrSmugleaf@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2023 Tom Leys <tom@crump-leys.com>
-// SPDX-FileCopyrightText: 2023 Visne <39844191+Visne@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 Aviu00 <93730715+Aviu00@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 Fildrance <fildrance@gmail.com>
-// SPDX-FileCopyrightText: 2024 Nemanja <98561806+EmoGarbage404@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 ScarKy0 <scarky0@onet.eu>
-// SPDX-FileCopyrightText: 2024 deltanedas <39013340+deltanedas@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 deltanedas <@deltanedas:kde.org>
-// SPDX-FileCopyrightText: 2024 metalgearsloth <31366439+metalgearsloth@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 nikthechampiongr <32041239+nikthechampiongr@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 pa.pecherskij <pa.pecherskij@interfax.ru>
-// SPDX-FileCopyrightText: 2024 slarticodefast <161409025+slarticodefast@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 Aiden <28298836+Aidenkrz@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 Pieter-Jan Briers <pieterjan.briers+git@gmail.com>
-//
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 using Content.Shared.Doors.Components;
@@ -25,17 +6,18 @@ using Content.Shared.Popups;
 using Content.Shared.Prying.Components;
 using Content.Shared.Wires;
 using Robust.Shared.Timing;
+using Content.Shared._BRatbite.Access;
 
 namespace Content.Shared.Doors.Systems;
 
 public abstract class SharedAirlockSystem : EntitySystem
 {
-    [Dependency] private   readonly IGameTiming _timing = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] protected readonly SharedAppearanceSystem Appearance = default!;
     [Dependency] protected readonly SharedAudioSystem Audio = default!;
     [Dependency] protected readonly SharedDoorSystem DoorSystem = default!;
     [Dependency] protected readonly SharedPopupSystem Popup = default!;
-    [Dependency] private   readonly SharedWiresSystem _wiresSystem = default!;
+    [Dependency] private readonly SharedWiresSystem _wiresSystem = default!;
 
     public override void Initialize()
     {
@@ -48,6 +30,7 @@ public abstract class SharedAirlockSystem : EntitySystem
         SubscribeLocalEvent<AirlockComponent, BeforeDoorDeniedEvent>(OnBeforeDoorDenied);
         SubscribeLocalEvent<AirlockComponent, GetPryTimeModifierEvent>(OnGetPryMod);
         SubscribeLocalEvent<AirlockComponent, BeforePryEvent>(OnBeforePry);
+        SubscribeLocalEvent<AirlockComponent, EmergencyAccessChangedEvent>((Entity<AirlockComponent> ent, ref EmergencyAccessChangedEvent ev) => UpdateEmergencyLightStatus(ent));
     }
 
     private void OnBeforeDoorClosed(EntityUid uid, AirlockComponent airlock, BeforeDoorClosedEvent args)
@@ -160,29 +143,21 @@ public abstract class SharedAirlockSystem : EntitySystem
         args.Cancelled = true;
     }
 
-    public void UpdateEmergencyLightStatus(EntityUid uid, AirlockComponent component)
+    public void UpdateEmergencyLightStatus(EntityUid uid)
     {
-        Appearance.SetData(uid, DoorVisuals.EmergencyLights, component.EmergencyAccess);
+        var emergencyAccess = EnsureComp<EmergencyAccessComponent>(uid);
+        Appearance.SetData(uid, DoorVisuals.EmergencyLights, emergencyAccess.EmergencyAccess);
     }
 
-    public void SetEmergencyAccess(Entity<AirlockComponent> ent, bool value, EntityUid? user = null, bool predicted = false)
-    {
-        if(!ent.Comp.Powered)
-            return;
-
-        if (ent.Comp.EmergencyAccess == value)
-            return;
-
-        ent.Comp.EmergencyAccess = value;
-        Dirty(ent, ent.Comp); // This only runs on the server apparently so we need this.
-        UpdateEmergencyLightStatus(ent, ent.Comp);
-
-        var sound = ent.Comp.EmergencyAccess ? ent.Comp.EmergencyOnSound : ent.Comp.EmergencyOffSound;
-        if (predicted)
-            Audio.PlayPredicted(sound, ent, user: user);
-        else
-            Audio.PlayPvs(sound, ent);
-    }
+    // Ratbite: don't use this, use EmergencyAccessSystem::SetEmergencyAccess.
+    //    public void SetEmergencyAccess(Entity<AirlockComponent> ent, bool value, EntityUid? user = null, bool predicted = false)
+    //    {
+    //        if(!ent.Comp.Powered)
+    //            return;
+    //        var emergencyAccess = EnsureComp<EmergencyAccessComponent>(ent);
+    //
+    //        _emergencyAccessSystem.SetEmergencyAccess((ent.Owner, emergencyAccess), value, user, predicted);
+    //    }
 
     public void SetAutoCloseDelayModifier(AirlockComponent component, float value)
     {

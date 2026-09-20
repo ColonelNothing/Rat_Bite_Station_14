@@ -2,8 +2,8 @@
 #region Medical Orderly
 - type: job
   id: MedOrderly
-  name: Medical Orderly
-  description: "Protect the medical department, its staff, its patients and above all else, the CMO"
+  name: job-name-medical-orderly
+  description: job-description-medical-orderly
   playTimeTracker: JobMedOrderly
   requirements:
     - !type:DepartmentTimeRequirement
@@ -17,11 +17,21 @@
       species:
       - Felinid
       - Scurret
-  goobcoins: 30
+      - Monkey
+      - Kobold
+    - !type:TraitsRequirement # Ratbite: No NRP traits
+      inverted: true
+      traits:
+      - Trigger
+      - SocialAnxietyTrait
+      - ChronicKleptomania
+      - Nudist
+      - Stowaway
+  goobcoins: 40
   weight: 20
   startingGear: MedicalOrderlyGear
   icon: "JobIconMedicalOrderly"
-  supervisors: ChiefMedicalOfficer
+  supervisors: job-supervisors-cmo
   canBeAntag: false
   access:
   - Maintenance
@@ -34,12 +44,11 @@
     components:
       - type: Condemned
         soulOwnedNotDevil: true # Bootlicker for NT
-      - type: CombatTrained # ratbite
 
 - type: startingGear
   id: MedicalOrderlyGear
   equipment:
-    eyes: ClothingEyesGlassesSunglasses
+    eyes: ClothingEyesGlassesMedical
     ears: ClothingHeadsetMedicalGuard # Their headsets have some seccomms now so they don't deal with shit alone.
     id: MedWatchPDA
   storage:
@@ -62,8 +71,8 @@
 #region Cargo Insurance
 - type: job
   id: CargoInsurance
-  name: Cargo Insurance
-  description: "Protect the cargo department, its assets, its employees, and above all else, protect the quartermaster"
+  name: job-name-cargo-insurance
+  description: job-description-cargo-insurance
   playTimeTracker: JobCargoInsurance
 
   requirements:
@@ -78,12 +87,22 @@
       species:
       - Felinid
       - Scurret
+      - Monkey
+      - Kobold
+    - !type:TraitsRequirement # Ratbite: No NRP traits
+      inverted: true
+      traits:
+      - Trigger
+      - SocialAnxietyTrait
+      - ChronicKleptomania
+      - Nudist
+      - Stowaway
 
   startingGear: CargoInsuranceGear
   icon: "JobIconCargoInsurance"
-  supervisors: Quartermaster
+  supervisors: job-supervisors-qm
   canBeAntag: false
-  goobcoins: 20 #Goob content
+  goobcoins: 40 #Goob content
   access:
   - Cargo
   - Maintenance
@@ -95,12 +114,11 @@
     components:
       - type: Condemned
         soulOwnedNotDevil: true
-      - type: CombatTrained # ratbite
 
 - type: startingGear
   id: CargoInsuranceGear
   equipment:
-    eyes: ClothingEyesGlassesSunglasses
+    eyes: ClothingEyesGlassesCargo
     id: CargoWatchPDA
     ears: ClothingHeadsetCargoGuard
   storage:
@@ -123,8 +141,8 @@
 #region SciGuard
 - type: job
   id: ScicurityGuard
-  name: Sci-Curity Guard
-  description: "Protect the science department, the scientists, its research, and above all else, the Research Director"
+  name: job-name-sci-guard
+  description: job-description-sci-guard
   playTimeTracker: JobScicurityGuard
   requirements:
     - !type:DepartmentTimeRequirement
@@ -138,11 +156,21 @@
       species:
       - Felinid
       - Scurret
+      - Monkey
+      - Kobold
+    - !type:TraitsRequirement # Ratbite: No NRP traits
+      inverted: true
+      traits:
+      - Trigger
+      - SocialAnxietyTrait
+      - ChronicKleptomania
+      - Nudist
+      - Stowaway
   startingGear: ScicurityguardGear
   icon: "JobIconScicurityGuard"
   supervisors: job-supervisors-rd
   canBeAntag: true # ourple guy
-  goobcoins: 20 #Goob content
+  goobcoins: 40 #Goob content
   access:
   - Research
   - Maintenance
@@ -154,12 +182,11 @@
     components:
       - type: Condemned
         soulOwnedNotDevil: true
-      - type: CombatTrained # ratbite
 
 - type: startingGear
   id: ScicurityguardGear
   equipment:
-    eyes: ClothingEyesGlassesSunglasses
+    eyes: ClothingEyesGlassesScience
     ears: ClothingHeadsetScienceGuard
     id: SciWatchPDA
   storage:
@@ -182,8 +209,8 @@
 #region Engi Sentry
 - type: job
   id: EngiSentry
-  name: Engi Sentry
-  description: "Protect engineering, its workers, its infrastructure, and above all else, the Chief Engineer"
+  name: job-name-engi-sentry
+  description: job-description-engi-sentry
   playTimeTracker: JobEngiSentry
   requirements:
     - !type:DepartmentTimeRequirement
@@ -197,12 +224,21 @@
       species:
       - Felinid
       - Scurret
-
+      - Monkey
+      - Kobold
+    - !type:TraitsRequirement # Ratbite: No NRP traits
+      inverted: true
+      traits:
+      - Trigger
+      - SocialAnxietyTrait
+      - ChronicKleptomania
+      - Nudist
+      - Stowaway
   startingGear: EngiSentryGear
   icon: "JobIconEngiSentry"
   supervisors: job-supervisors-ce
   canBeAntag: false
-  goobcoins: 20 #Goob content
+  goobcoins: 40 #Goob content
   access:
   - Maintenance
   - Engineering
@@ -217,7 +253,6 @@
     components:
       - type: Condemned
         soulOwnedNotDevil: true
-      - type: CombatTrained # ratbite
   - !type:AddComponentSpecial
     components:
     - type: EngineeringStaff
@@ -225,7 +260,7 @@
 - type: startingGear
   id: EngiSentryGear
   equipment:
-    eyes: ClothingEyesGlassesSunglasses
+    eyes: ClothingEyesGlassesEngineering
     ears: ClothingHeadsetEngineeringGuard
     id: EngineerWatchPDA
   storage:

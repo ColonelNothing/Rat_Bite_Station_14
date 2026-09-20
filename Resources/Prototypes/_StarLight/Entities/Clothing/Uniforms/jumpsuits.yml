@@ -1,12 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Aiden <28298836+Aidenkrz@users.noreply.github.com>
-# SPDX-FileCopyrightText: 2025 Aiden <aiden@djkraz.com>
-# SPDX-FileCopyrightText: 2025 Fishbait <Fishbait@git.ml>
-# SPDX-FileCopyrightText: 2025 Ilya246 <57039557+Ilya246@users.noreply.github.com>
-# SPDX-FileCopyrightText: 2025 Rinary <72972221+Rinary1@users.noreply.github.com>
-# SPDX-FileCopyrightText: 2025 Theodore Lukin <66275205+pheenty@users.noreply.github.com>
-# SPDX-FileCopyrightText: 2025 fishbait <gnesse@gmail.com>
-# SPDX-FileCopyrightText: 2025 ss14-Starlight <ss14-Starlight@outlook.com>
-#
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 - type: entity
@@ -28,3 +19,25 @@
     component:
     - type: VentCrawler
       allowInventory: true
+
+- type: entity # Starlight Port
+  parent: [ClothingUniformBase, BaseCentcommContraband]
+  id: ClothingUniformJumpsuitEliteBlueShield
+  name: elite blueshield officer's suit
+  description: Suit of an Elite Blueshield. To reach such a level, you must have protected command from a [REDACTED] threat.
+  components:
+  - type: Sprite
+    sprite: _Starlight/Clothing/Uniforms/Jumpsuit/eliteblueshield.rsi
+  - type: Clothing
+    sprite: _Starlight/Clothing/Uniforms/Jumpsuit/eliteblueshield.rsi
+
+- type: entity
+  parent: [ClothingUniformBase, BaseCentcommContraband]
+  id: ClothingUniformJumpsuitFormalBlueShield
+  name: formal blueshield officer suit
+  description: A textile jumpsuit, reinforced with thick leather in some areas.
+  components:
+  - type: Sprite
+    sprite: _Starlight/Clothing/Uniforms/Jumpsuit/formal_blueshield.rsi
+  - type: Clothing
+    sprite: _Starlight/Clothing/Uniforms/Jumpsuit/formal_blueshield.rsi

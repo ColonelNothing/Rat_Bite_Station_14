@@ -1,49 +1,59 @@
-// SPDX-FileCopyrightText: 2025 August Eymann <august.eymann@gmail.com>
-// SPDX-FileCopyrightText: 2025 GoobBot <uristmchands@proton.me>
-// SPDX-FileCopyrightText: 2025 SolsticeOfTheWinter <solsticeofthewinter@gmail.com>
-// SPDX-FileCopyrightText: 2025 TheBorzoiMustConsume <197824988+TheBorzoiMustConsume@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 gluesniffler <159397573+gluesniffler@users.noreply.github.com>
-//
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 using Content.Goobstation.Common.CCVar;
 using Content.Goobstation.Shared.Xenobiology.Components;
 using Content.Shared.Nutrition.Components;
-using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
+using Content.Shared.Body.Systems;
+using Content.Shared.Body.Components;
+using Content.Shared.Chemistry.EntitySystems;
+using Content.Goobstation.Maths.FixedPoint;
+using Content.Shared.Chemistry.Components;
+using Robust.Shared.Prototypes;
+using Content.Shared.Popups;
 
 namespace Content.Goobstation.Shared.Xenobiology.Systems;
 
 // This handles slime breeding and mutation.
 public partial class XenobiologySystem
 {
+    [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private readonly SharedSolutionContainerSystem _solutionContainer = default!;
+    [Dependency] private readonly SharedBodySystem _body = default!;
+    [Dependency] private readonly StomachSystem _stomach = default!;
+
     private void SubscribeBreeding()
     {
-        SubscribeLocalEvent<PendingSlimeSpawnComponent, MapInitEvent>(OnPendingSlimeMapInit);
+        SubscribeLocalEvent<RandomSlimeChangeComponent, MapInitEvent>(OnPendingSlimeMapInit);
         SubscribeLocalEvent<SlimeComponent, MapInitEvent>(OnSlimeMapInit);
     }
 
-    private void OnPendingSlimeMapInit(Entity<PendingSlimeSpawnComponent> ent, ref MapInitEvent args)
+    private void OnPendingSlimeMapInit(Entity<RandomSlimeChangeComponent> ent, ref MapInitEvent args)
     {
-        if (!_net.IsServer) return;
-
-        // it sucks but it works and now y*ml warriors can add more slimes 500% faster
-        var slime = SpawnSlime(ent, ent.Comp.BasePrototype, ent.Comp.Breed);
-        if (!slime.HasValue)
+        if (!_net.IsServer
+            || !TryComp(ent.Owner, out SlimeComponent? slime))
             return;
 
-        var s = slime.Value.Comp;
         // every xenobio slime copy is personalized. feel free to tweak it as you like
-        // the rest of the shit such as inheritance is handled by SpawnSlime
-        s.MutationChance *= _random.NextFloat(.5f, 1.5f);
-        s.MaxOffspring += _random.Next(-1, 2);
-        s.ExtractsProduced += _random.Next(0, 2);
-        s.MitosisHunger *= _random.NextFloat(.75f, 1.2f);
+        slime.MutationChance *= _random.NextFloat(.5f, 1.5f);
+        slime.MaxOffspring += _random.Next(-1, 2);
+        slime.ExtractsProduced += _random.Next(0, 2);
+        slime.MitosisHunger *= _random.NextFloat(.75f, 1.2f);
+
+        RemComp(ent.Owner, ent.Comp);
     }
 
     private void OnSlimeMapInit(Entity<SlimeComponent> ent, ref MapInitEvent args)
     {
-        if (!_net.IsServer) return;
+        var (uid, comp) = ent;
+
+        if (comp.Shader != null)
+            _appearance.SetData(uid, XenoSlimeVisuals.Shader, comp.Shader);
+
+        _appearance.SetData(uid, XenoSlimeVisuals.Color, comp.SlimeColor);
+
+        if (!_net.IsServer)
+            return;
 
         Subs.CVar(_configuration, GoobCVars.BreedingInterval, val => ent.Comp.UpdateInterval = TimeSpan.FromSeconds(val), true);
         ent.Comp.NextUpdateTime = _gameTiming.CurTime + ent.Comp.UpdateInterval;
@@ -54,9 +64,11 @@ public partial class XenobiologySystem
     /// </summary>
     private void UpdateMitosis()
     {
-        var eligibleSlimes = new HashSet<Entity<SlimeComponent, MobGrowthComponent, HungerComponent>>();
+        if (_net.IsClient) // Ratbite: Shouldn't run on clients
+            return;
 
         var query = EntityQueryEnumerator<SlimeComponent, MobGrowthComponent, HungerComponent>();
+        var slimeToMitosis = new List<Entity<SlimeComponent>>(); // Ratbite: C# complains if we do mitosis while it's enumerating
         while (query.MoveNext(out var uid, out var slime, out var growthComp, out var hungerComp))
         {
             if (_gameTiming.CurTime < slime.NextUpdateTime
@@ -64,20 +76,18 @@ public partial class XenobiologySystem
                 || growthComp.IsFirstStage)
                 continue;
 
-            eligibleSlimes.Add((uid, slime, growthComp, hungerComp));
-            slime.NextUpdateTime = _gameTiming.CurTime + slime.UpdateInterval;
-        }
+            if (_hunger.GetHunger(hungerComp) > slime.MitosisHunger - slime.JitterDifference)
+                _jitter.DoJitter(uid, TimeSpan.FromSeconds(1), true);
 
-        foreach (var ent in eligibleSlimes)
-        {
-            if (_hunger.GetHunger(ent) > ent.Comp1.MitosisHunger - ent.Comp1.JitterDifference)
-                _jitter.DoJitter(ent, TimeSpan.FromSeconds(1), true);
-
-            if (_hunger.GetHunger(ent) < ent.Comp1.MitosisHunger)
+            if (_hunger.GetHunger(hungerComp) < slime.MitosisHunger)
                 continue;
 
-            DoMitosis(ent);
+            slimeToMitosis.Add((uid, slime)); // Ratbite
+            slime.NextUpdateTime = _gameTiming.CurTime + slime.UpdateInterval;
         }
+        foreach (var slime in slimeToMitosis) // Ratbite
+            DoMitosis(slime);
+
     }
 
     /// <summary>
@@ -87,11 +97,32 @@ public partial class XenobiologySystem
     /// </summary>
     private void DoMitosis(Entity<SlimeComponent> ent)
     {
-        if (_net.IsClient)
-            return;
+        //if (_net.IsClient) // Ratbite: Moved to UpdateMitosis()
+        //    return;
 
         var offspringCount = _random.Next(1, ent.Comp.MaxOffspring + 1);
+
+        // Ratbite Begin — handles capping slime count by grids
+        if (Transform(ent).GridUid is { } gridUid
+        && _cachedStationSlimeCount.TryGetValue(gridUid, out var currentCount))
+        {
+            if (offspringCount > _slimeCountCap - currentCount)
+            {
+                if (_gameTiming.CurTime >= _nextCapPopupTime.GetValueOrDefault(gridUid))
+                {
+                    _nextCapPopupTime[gridUid] = _gameTiming.CurTime + _capPopupCooldown;
+                    _popup.PopupEntity(Loc.GetString("slime-mitosis-population-cap"), ent, PopupType.Medium);
+                }
+                return;
+            }
+
+            _cachedStationSlimeCount[gridUid] = currentCount - 1 + offspringCount;
+        }
+        // Ratbite End
+
         _audio.PlayPredicted(ent.Comp.MitosisSound, ent, ent);
+
+        List<EntityUid> slimes = [];
 
         for (var i = 0; i < offspringCount; i++)
         {
@@ -100,44 +131,56 @@ public partial class XenobiologySystem
             if (_random.Prob(ent.Comp.MutationChance) && ent.Comp.PotentialMutations.Count > 0)
                 selectedBreed = _random.Pick(ent.Comp.PotentialMutations);
 
-            var sl = SpawnSlime(ent, ent.Comp.DefaultSlimeProto, selectedBreed);
-            if (sl.HasValue)
+            var sl = SpawnNextToOrDrop(selectedBreed, ent.Owner);
+            if (TryComp(sl, out SlimeComponent? newComp))
             {
                 // carries over generations. type shit.
-                var newSlime = sl.Value.Comp;
-                newSlime.Tamer = ent.Comp.Tamer;
-                newSlime.MutationChance = ent.Comp.MutationChance;
-                newSlime.MaxOffspring = ent.Comp.MaxOffspring;
-                newSlime.ExtractsProduced = ent.Comp.ExtractsProduced;
+                newComp.Tamer = ent.Comp.Tamer;
+                newComp.MutationChance = ent.Comp.MutationChance;
+                newComp.MaxOffspring = ent.Comp.MaxOffspring;
+                newComp.ExtractsProduced = ent.Comp.ExtractsProduced;
+                slimes.Add(sl);
+            }
+        }
+
+        // transfer chem bloodstream and stomach chemicals to children evenly
+        var slimeScale = 1 / (float) slimes.Count;
+        var parentStomachList = _body.GetBodyOrganEntityComps<StomachComponent>(ent.Owner);
+        var parentStomachSolutionTransfer = new Solution();
+        foreach (var stomach in parentStomachList)
+        {
+            if (_solutionContainer.ResolveSolution(stomach.Owner, StomachSystem.DefaultSolutionName, ref stomach.Comp1.Solution, out var sol))
+            {
+                parentStomachSolutionTransfer.AddSolution(sol, _proto);
+                sol.RemoveAllSolution();
+            }
+        }
+        parentStomachSolutionTransfer.ScaleSolution(slimeScale);
+
+        var parentChemSolutionTransfer = new Solution();
+        if (TryComp<BloodstreamComponent>(ent, out var parentBloodstream)
+            && _solutionContainer.ResolveSolution(ent.Owner, parentBloodstream.BloodSolutionName, ref parentBloodstream.BloodSolution, out var parentChem))
+        {
+            parentChemSolutionTransfer.AddSolution(parentChem, _proto);
+            parentChem.RemoveAllSolution();
+        }
+        parentChemSolutionTransfer.ScaleSolution(slimeScale);
+
+        foreach (var s in slimes)
+        {
+            if (TryComp<BloodstreamComponent>(s, out var childBloodstream)
+                && _solutionContainer.ResolveSolution(s, childBloodstream.BloodSolutionName, ref childBloodstream.BloodSolution, out var childChem))
+                childChem.AddSolution(parentChemSolutionTransfer, _proto);
+
+            var childStomachList = _body.GetBodyOrganEntityComps<StomachComponent>(s);
+            foreach (var stomach in childStomachList)
+            {
+                _stomach.TryTransferSolution(stomach.Owner, parentStomachSolutionTransfer, stomach);
             }
         }
 
         _containerSystem.EmptyContainer(ent.Comp.Stomach);
+        RaiseLocalEvent(ent, new SlimeMitosisEvent());
         QueueDel(ent);
-    }
-
-    /// <summary>
-    ///     Spawns a slime with a given mutation
-    /// </summary>
-    /// <param name="parent">The original entity.</param>
-    /// <param name="newEntityProto">The proto of the entity being spawned.</param>
-    /// <param name="selectedBreed">The selected breed of the entity.</param>
-    private Entity<SlimeComponent>? SpawnSlime(EntityUid parent, EntProtoId newEntityProto, ProtoId<BreedPrototype> selectedBreed)
-    {
-        if (Deleted(parent)
-        || !_prototypeManager.TryIndex(selectedBreed, out var newBreed) || _net.IsClient)
-            return null;
-
-        var newEntityUid = SpawnNextToOrDrop(newEntityProto, parent, null, newBreed.Components);
-        if (!TryComp<SlimeComponent>(newEntityUid, out var newSlime))
-            return null;
-
-        if (newSlime.ShouldHaveShader && newSlime.Shader != null)
-            _appearance.SetData(newEntityUid, XenoSlimeVisuals.Shader, newSlime.Shader);
-
-        _appearance.SetData(newEntityUid, XenoSlimeVisuals.Color, newSlime.SlimeColor);
-        _metaData.SetEntityName(newEntityUid, newBreed.BreedName);
-
-        return new Entity<SlimeComponent>(newEntityUid, newSlime);
     }
 }

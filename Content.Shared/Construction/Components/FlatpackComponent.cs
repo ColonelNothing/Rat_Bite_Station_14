@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: 2024 Nemanja <98561806+EmoGarbage404@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 Aiden <28298836+Aidenkrz@users.noreply.github.com>
-//
 // SPDX-License-Identifier: MIT
 
 using Content.Shared.Tools;
@@ -22,7 +19,7 @@ public sealed partial class FlatpackComponent : Component
     /// The tool quality that, upon used to interact with this object, will create the <see cref="Entity"/>
     /// </summary>
     [DataField, ViewVariables(VVAccess.ReadWrite), AutoNetworkedField]
-    public ProtoId<ToolQualityPrototype> QualityNeeded = "Pulsing";
+    public ProtoId<ToolQualityPrototype> QualityNeeded = "Unpacking"; // Ratbite
 
     /// <summary>
     /// The entity that is spawned when this object is unpacked.

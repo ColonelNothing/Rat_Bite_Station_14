@@ -25,7 +25,7 @@
   - type: Projectile
     damage:
       types:
-        Piercing: 22 # Ratbite balance
+        Piercing: 25 # Total 150 damage
 
 - type: entity
   id: HighCaliberPelletShotgunSpread
@@ -243,8 +243,6 @@
       - ReagentId: Sarin
         Quantity: 20
     spreadAmount: 1
-  - type: ActiveTimerTrigger
-    timeRemaining: 1
   - type: DeleteOnTrigger
   - type: Projectile
     damage:

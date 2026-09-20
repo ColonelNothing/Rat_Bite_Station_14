@@ -1,23 +1,10 @@
-// SPDX-FileCopyrightText: 2025 Aiden <28298836+Aidenkrz@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 GoobBot <uristmchands@proton.me>
-// SPDX-FileCopyrightText: 2025 Kayzel <43700376+KayzelW@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 Piras314 <p1r4s@proton.me>
-// SPDX-FileCopyrightText: 2025 Roudenn <romabond091@gmail.com>
-// SPDX-FileCopyrightText: 2025 Spatison <137375981+Spatison@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 Trest <144359854+trest100@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 deltanedas <39013340+deltanedas@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 deltanedas <@deltanedas:kde.org>
-// SPDX-FileCopyrightText: 2025 gluesniffler <159397573+gluesniffler@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 gluesniffler <linebarrelerenthusiast@gmail.com>
-// SPDX-FileCopyrightText: 2025 kurokoTurbo <92106367+kurokoTurbo@users.noreply.github.com>
-//
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 using Content.Client._Shitmed.Choice.UI;
 using Content.Client.Administration.UI.CustomControls;
 using Content.Shared._Shitmed.Medical.Surgery;
+using Content.Shared._Shitmed.Targeting;
 using Content.Shared.Body.Components;
-using Content.Shared.Body.Part;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
 using Robust.Client.Player;
@@ -79,6 +66,7 @@ public sealed class SurgeryBui : BoundUserInterface
                 _isBody = false;
                 _surgery = null;
                 _previousSurgeries.Clear();
+                _window.PartSelector.SetSelected(null);
                 View(ViewType.Parts);
             };
 
@@ -110,11 +98,19 @@ public sealed class SurgeryBui : BoundUserInterface
 
                 OnSurgeryPressed((previousId, previous), netPart.Value, last);
             };
+
+            _window.PartSelector.OnPartPressed += part =>
+            {
+                if (State is not SurgeryBuiState currentState
+                    || !currentState.Parts.TryGetValue(part, out var data))
+                    return;
+
+                OnPartPressed(data.Part, data.Surgeries);
+            };
         }
 
         _window.Surgeries.DisposeAllChildren();
         _window.Steps.DisposeAllChildren();
-        _window.Parts.DisposeAllChildren();
         View(ViewType.Parts);
 
         var oldSurgery = _surgery;
@@ -122,61 +118,33 @@ public sealed class SurgeryBui : BoundUserInterface
         _part = null;
         _surgery = null;
 
-        var options = new List<(NetEntity netEntity, EntityUid entity, string Name, BodyPartType? PartType)>();
-        foreach (var choice in state.Choices.Keys)
-            if (_entities.TryGetEntity(choice, out var ent))
-            {
-                if (_entities.TryGetComponent(ent, out BodyPartComponent? part))
-                    options.Add((choice, ent.Value, _entities.GetComponent<MetaDataComponent>(ent.Value).EntityName, part.PartType));
-                else if (_entities.TryGetComponent(ent, out BodyComponent? body))
-                    options.Add((choice, ent.Value, _entities.GetComponent<MetaDataComponent>(ent.Value).EntityName, null));
-            }
+        _window.PartSelector.SetState(state);
 
-        options.Sort((a, b) =>
+        foreach (var data in state.Parts.Values)
         {
-            int GetScore(BodyPartType? partType)
-            {
-                return partType switch
+            if (!_entities.TryGetEntity(data.Part, out var entity))
+                continue;
+
+            if (oldPart != entity)
+                continue;
+            var restored = false;
+
+            if (oldSurgery != null)
+                foreach (var surgeryId in data.Surgeries)
                 {
-                    BodyPartType.Head => 1,
-                    BodyPartType.Chest => 2,
-                    BodyPartType.Groin => 3,
-                    BodyPartType.Arm => 4,
-                    BodyPartType.Hand => 5,
-                    BodyPartType.Leg => 6,
-                    BodyPartType.Foot => 7,
-                    // BodyPartType.Tail => 8, No tails yet!
-                    BodyPartType.Other => 9,
-                    _ => 10
-                };
-            }
 
-            return GetScore(a.PartType) - GetScore(b.PartType);
-        });
+                    if (oldSurgery.Value.Proto != surgeryId
+                        || _system.GetSingleton(surgeryId) is not { } surgery
+                        || !_entities.TryGetComponent(surgery, out SurgeryComponent? surgeryComp))
+                        continue;
 
-        foreach (var (netEntity, entity, partName, _) in options)
-        {
-            //var netPart = _entities.GetNetEntity(part.Owner);
-            var surgeries = state.Choices[netEntity];
-            var partButton = new ChoiceControl();
+                    OnSurgeryPressed((surgery, surgeryComp), data.Part, surgeryId);
+                    restored = true;
+                    break;
+                }
 
-            partButton.Set(partName, null);
-            partButton.Button.OnPressed += _ => OnPartPressed(netEntity, surgeries);
-
-            _window.Parts.AddChild(partButton);
-
-            foreach (var surgeryId in surgeries)
-            {
-                if (_system.GetSingleton(surgeryId) is not { } surgery ||
-                    !_entities.TryGetComponent(surgery, out SurgeryComponent? surgeryComp))
-                    continue;
-
-                if (oldPart == entity && oldSurgery?.Proto == surgeryId)
-                    OnSurgeryPressed((surgery, surgeryComp), netEntity, surgeryId);
-            }
-
-            if (oldPart == entity && oldSurgery == null)
-                OnPartPressed(netEntity, surgeries);
+            if (!restored)
+                OnPartPressed(data.Part, data.Surgeries);
         }
 
 
@@ -243,6 +211,7 @@ public sealed class SurgeryBui : BoundUserInterface
 
         _part = _entities.GetEntity(netPart);
         _isBody = _entities.HasComponent<BodyComponent>(_part);
+        _window.PartSelector.SetSelected(GetTargetPart(netPart));
         _window.Surgeries.DisposeAllChildren();
 
         var surgeries = new List<(Entity<SurgeryComponent> Ent, EntProtoId Id, string Name)>();
@@ -280,14 +249,29 @@ public sealed class SurgeryBui : BoundUserInterface
         View(ViewType.Surgeries);
     }
 
+    private TargetBodyPart? GetTargetPart(NetEntity netPart)
+    {
+        if (State is not SurgeryBuiState state)
+            return null;
+
+        foreach (var (targetPart, data) in state.Parts)
+        {
+            if (data.Part == netPart)
+                return targetPart;
+        }
+
+        return null;
+    }
+
     private void RefreshUI()
     {
         if (_window == null
             || !_window.IsOpen
             || _part == null
             || !_entities.HasComponent<SurgeryComponent>(_surgery?.Ent)
-            || !_entities.TryGetComponent(_player.LocalEntity, out SurgeryTargetComponent? surgeryComp)
-            || !surgeryComp.CanOperate)
+            // || !_entities.TryGetComponent(_player.LocalEntity, out SurgeryTargetComponent? surgeryComp)
+            // || !surgeryComp.CanOperate // Ratbite: Remove goob shitcode where they check that the surgeon can be operated themselves
+            || _player.LocalEntity is null)
             return;
 
         var next = _system.GetNextStep(Owner, _part.Value, _surgery.Value.Ent, _player.LocalEntity.Value);

@@ -1,20 +1,3 @@
-// SPDX-FileCopyrightText: 2022 DrSmugleaf <DrSmugleaf@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2022 Illiux <newoutlook@gmail.com>
-// SPDX-FileCopyrightText: 2022 Jezithyr <Jezithyr.@gmail.com>
-// SPDX-FileCopyrightText: 2022 Jezithyr <Jezithyr@gmail.com>
-// SPDX-FileCopyrightText: 2022 Jezithyr <jmaster9999@gmail.com>
-// SPDX-FileCopyrightText: 2022 Júlio César Ueti <52474532+Mirino97@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2022 Paul Ritter <ritter.paul1@googlemail.com>
-// SPDX-FileCopyrightText: 2022 Visne <39844191+Visne@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2022 mirrorcult <lunarautomaton6@gmail.com>
-// SPDX-FileCopyrightText: 2022 wrexbe <81056464+wrexbe@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2022 wrexbe <wrexbe@protonmail.com>
-// SPDX-FileCopyrightText: 2024 Crotalus <Crotalus@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 deltanedas <39013340+deltanedas@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 deltanedas <@deltanedas:kde.org>
-// SPDX-FileCopyrightText: 2024 metalgearsloth <31366439+metalgearsloth@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 Aiden <28298836+Aidenkrz@users.noreply.github.com>
-//
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 using System.Linq;
@@ -40,7 +23,6 @@ namespace Content.Client.UserInterface.Systems.Ghost.Controls
         {
             RobustXamlLoader.Load(this);
             SearchBar.OnTextChanged += OnSearchTextChanged;
-            GhostScroll.OnResized += OnWindowResized;
             GhostnadoButton.OnPressed += _ => OnGhostnadoClicked?.Invoke();
         }
 
@@ -54,7 +36,7 @@ namespace Content.Client.UserInterface.Systems.Ghost.Controls
                 if (warp.Mob)
                 {
                     name = warp.DisplayName + (warp.Followers > 0 ? " f: " + warp.Followers : "");
-                    if(warp.Player_ghost)
+                    if (warp.IsGhost)
                     {
                         type = 4;
                     }
@@ -81,11 +63,12 @@ namespace Content.Client.UserInterface.Systems.Ghost.Controls
 
         public void Populate()
         {
-            AntagonistContainer.DisposeAllChildren();
-            LivingContainer.DisposeAllChildren();
-            DeadContainer.DisposeAllChildren();
-            GhostContainer.DisposeAllChildren();
-            MiscContainer.DisposeAllChildren();
+            // Clear the category grids only. ButtonContainer holds the Collapsible layout itself.
+            AntagonistContainer.RemoveAllChildren();
+            LivingContainer.RemoveAllChildren();
+            DeadContainer.RemoveAllChildren();
+            GhostContainer.RemoveAllChildren();
+            MiscContainer.RemoveAllChildren();
             AddButtons();
         }
 
@@ -160,6 +143,11 @@ namespace Content.Client.UserInterface.Systems.Ghost.Controls
                 if (child is Button button)
                     button.Visible = ButtonIsVisible(button);
             }
+            foreach (var child in DeadContainer.Children)
+            {
+                if (child is Button button)
+                    button.Visible = ButtonIsVisible(button);
+            }
             foreach (var child in GhostContainer.Children)
             {
                 if (child is Button button)
@@ -170,15 +158,6 @@ namespace Content.Client.UserInterface.Systems.Ghost.Controls
                 if (child is Button button)
                     button.Visible = ButtonIsVisible(button);
             }
-        }
-
-        private void OnWindowResized()
-        {
-            var x = GhostScroll.Size.X - 10;
-            AntagonistContainer.MaxGridWidth = x;
-            LivingContainer.MaxGridWidth = x;
-            GhostContainer.MaxGridWidth = x;
-            MiscContainer.MaxGridWidth = x;
         }
 
         private void OnSearchTextChanged(LineEdit.LineEditEventArgs args)

@@ -1,9 +1,3 @@
-// SPDX-FileCopyrightText: 2024 slarticodefast <161409025+slarticodefast@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 Aiden <28298836+Aidenkrz@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 BombasterDS <deniskaporoshok@gmail.com>
-// SPDX-FileCopyrightText: 2025 GoobBot <uristmchands@proton.me>
-// SPDX-FileCopyrightText: 2025 ScarKy0 <106310278+ScarKy0@users.noreply.github.com>
-//
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 using Content.Server.StationEvents.Components;
@@ -17,6 +11,7 @@ using Content.Shared.GameTicking.Components;
 using Content.Shared.Station.Components;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
+using Content.Shared._BRatbite.Access;
 
 namespace Content.Server.StationEvents.Events;
 
@@ -33,6 +28,7 @@ public sealed class GreytideVirusRule : StationEventSystem<GreytideVirusRuleComp
     [Dependency] private readonly LockSystem _lock = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private readonly EmergencyAccessSystem _emergencyAccessSystem = default!;
 
     protected override void Added(EntityUid uid, GreytideVirusRuleComponent virusComp, GameRuleComponent gameRule, GameRuleAddedEvent args)
     {
@@ -63,7 +59,7 @@ public sealed class GreytideVirusRule : StationEventSystem<GreytideVirusRuleComp
         var accessIds = new HashSet<ProtoId<AccessLevelPrototype>>();
         foreach (var group in chosen)
         {
-            if (_prototype.TryIndex(group, out var proto))
+            if (_prototype.Resolve(group, out var proto))
                 accessIds.UnionWith(proto.Tags);
         }
 
@@ -110,8 +106,9 @@ public sealed class GreytideVirusRule : StationEventSystem<GreytideVirusRuleComp
             if (!_access.AreAccessTagsAllowed(accessIds, accessEnt.Value.Comp) || _access.AreAccessTagsAllowed(virusComp.Blacklist, accessEnt.Value.Comp))
                 continue;
 
-            // Goobstation - EA instead of open-bolt
-            _airlock.SetEmergencyAccess((airlockUid, airlockComp), true, null);
+            // Goobstation - EA instead of open-bolt - Ratbite: Decoupled emergency access from airlocks
+            var emergencyAccessComp = EnsureComp<EmergencyAccessComponent>(airlockUid);
+            _emergencyAccessSystem.SetEmergencyAccess((airlockUid, emergencyAccessComp), true, null);
         }
     }
 }

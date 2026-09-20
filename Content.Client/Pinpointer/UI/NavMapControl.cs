@@ -1,20 +1,3 @@
-// SPDX-FileCopyrightText: 2023 Ahion <58528255+Ahion@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2023 Visne <39844191+Visne@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 ElectroJr <leonsfriedrich@gmail.com>
-// SPDX-FileCopyrightText: 2024 Errant <35878406+Errant-4@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 Kara <lunarautomaton6@gmail.com>
-// SPDX-FileCopyrightText: 2024 Leon Friedrich <60421075+ElectroJr@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 Nemanja <98561806+EmoGarbage404@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 Plykiya <58439124+Plykiya@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 Wrexbe (Josh) <81056464+wrexbe@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 chromiumboy <50505512+chromiumboy@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 eoineoineoin <github@eoinrul.es>
-// SPDX-FileCopyrightText: 2024 metalgearsloth <31366439+metalgearsloth@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 metalgearsloth <comedian_vs_clown@hotmail.com>
-// SPDX-FileCopyrightText: 2024 plykiya <plykiya@protonmail.com>
-// SPDX-FileCopyrightText: 2024 wrexbe <wrexbe@protonmail.com>
-// SPDX-FileCopyrightText: 2025 Aiden <28298836+Aidenkrz@users.noreply.github.com>
-//
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 using Content.Client.Stylesheets;
@@ -59,6 +42,8 @@ public partial class NavMapControl : MapGridControl
     // Actions
     public event Action<NetEntity?>? TrackedEntitySelectedAction;
     public event Action<DrawingHandleScreen>? PostWallDrawingAction;
+    // Ratbite action
+    public event Action<Vector2>? ClickedOnMapAction;
 
     // Tracked data
     public Dictionary<EntityCoordinates, (bool Visible, Color Color)> TrackedCoordinates = new();
@@ -147,11 +132,7 @@ public partial class NavMapControl : MapGridControl
 
         var topPanel = new PanelContainer()
         {
-            PanelOverride = new StyleBoxFlat()
-            {
-                BackgroundColor = StyleNano.ButtonColorContext.WithAlpha(1f),
-                BorderColor = StyleNano.PanelDark
-            },
+            StyleClasses = { StyleClass.PanelDark },
             VerticalExpand = false,
             HorizontalExpand = true,
             SetWidth = 650f,
@@ -219,19 +200,15 @@ public partial class NavMapControl : MapGridControl
     protected override void KeyBindUp(GUIBoundKeyEventArgs args)
     {
         base.KeyBindUp(args);
-
         if (args.Function == EngineKeyFunctions.UIClick)
         {
-            if (TrackedEntitySelectedAction == null)
+            if (TrackedEntitySelectedAction == null && ClickedOnMapAction == null)
                 return;
-
-            if (_xform == null || _physics == null || TrackedEntities.Count == 0)
+            if (_xform == null || _physics == null || (TrackedEntities.Count == 0 && ClickedOnMapAction == null))
                 return;
-
             // If the cursor has moved a significant distance, exit
             if ((StartDragPosition - args.PointerLocation.Position).Length() > MinDragDistance)
                 return;
-
             // Get the clicked position
             var offset = Offset + _physics.LocalCenter;
             var localPosition = args.PointerLocation.Position - GlobalPixelPosition;
@@ -239,6 +216,9 @@ public partial class NavMapControl : MapGridControl
             // Convert to a world position
             var unscaledPosition = (localPosition - MidPointVector) / MinimapScale;
             var worldPosition = Vector2.Transform(new Vector2(unscaledPosition.X, -unscaledPosition.Y) + offset, _transformSystem.GetWorldMatrix(_xform));
+
+            // Ratbite
+            ClickedOnMapAction?.Invoke(worldPosition);
 
             // Find closest tracked entity in range
             var closestEntity = NetEntity.Invalid;
@@ -261,7 +241,7 @@ public partial class NavMapControl : MapGridControl
             if (closestDistance > MaxSelectableDistance || !closestEntity.IsValid())
                 return;
 
-            TrackedEntitySelectedAction.Invoke(closestEntity);
+            TrackedEntitySelectedAction?.Invoke(closestEntity);
         }
 
         else if (args.Function == EngineKeyFunctions.UIRightClick)
@@ -443,7 +423,7 @@ public partial class NavMapControl : MapGridControl
 
                 var scalingCoefficient = MinmapScaleModifier * float.Sqrt(MinimapScale);
                 var positionOffset = new Vector2(scalingCoefficient * blip.Scale * blip.Texture.Width, scalingCoefficient * blip.Scale * blip.Texture.Height);
-
+                handle.UseShader(blip.Shader);
                 handle.DrawTextureRect(blip.Texture, new UIBox2(position - positionOffset, position + positionOffset), blip.Color);
             }
         }
@@ -762,8 +742,9 @@ public struct NavMapBlip
     public bool Blinks;
     public bool Selectable;
     public float Scale;
+    public ShaderInstance? Shader; // Ratbite
 
-    public NavMapBlip(EntityCoordinates coordinates, Texture texture, Color color, bool blinks, bool selectable = true, float scale = 1f)
+    public NavMapBlip(EntityCoordinates coordinates, Texture texture, Color color, bool blinks, bool selectable = true, float scale = 1f, ShaderInstance? shader = null)
     {
         Coordinates = coordinates;
         Texture = texture;
@@ -771,5 +752,6 @@ public struct NavMapBlip
         Blinks = blinks;
         Selectable = selectable;
         Scale = scale;
+        Shader = shader;
     }
 }

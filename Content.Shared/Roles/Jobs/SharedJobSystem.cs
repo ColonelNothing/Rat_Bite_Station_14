@@ -1,27 +1,10 @@
-// SPDX-FileCopyrightText: 2023 DrSmugleaf <DrSmugleaf@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2023 metalgearsloth <31366439+metalgearsloth@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 Aidenkrz <aiden@djkraz.com>
-// SPDX-FileCopyrightText: 2024 ElectroJr <leonsfriedrich@gmail.com>
-// SPDX-FileCopyrightText: 2024 Leon Friedrich <60421075+ElectroJr@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 deltanedas <39013340+deltanedas@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 deltanedas <@deltanedas:kde.org>
-// SPDX-FileCopyrightText: 2024 nikthechampiongr <32041239+nikthechampiongr@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 username <113782077+whateverusername0@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 whateverusername0 <whateveremail>
-// SPDX-FileCopyrightText: 2025 Aiden <28298836+Aidenkrz@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 Errant <35878406+Errant-4@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 GabyChangelog <agentepanela2@gmail.com>
-// SPDX-FileCopyrightText: 2025 Kyoth25f <kyoth25f@gmail.com>
-// SPDX-FileCopyrightText: 2025 SX-7 <sn1.test.preria.2002@gmail.com>
-// SPDX-FileCopyrightText: 2025 beck-thompson <107373427+beck-thompson@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2025 gluesniffler <159397573+gluesniffler@users.noreply.github.com>
-//
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared.Players;
 using Content.Shared.Players.PlayTimeTracking;
+using Content.Shared.Roles.Components;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
@@ -36,12 +19,14 @@ public abstract partial class SharedJobSystem : EntitySystem
     [Dependency] private readonly SharedPlayerSystem _playerSystem = default!;
     [Dependency] private readonly IPrototypeManager _prototypes = default!;
     [Dependency] private readonly SharedRoleSystem _roles = default!;
+    private ISawmill _sawmill = default!;
 
     private readonly Dictionary<string, string> _inverseTrackerLookup = new();
 
     public override void Initialize()
     {
         base.Initialize();
+        _sawmill = Logger.GetSawmill("shared-job-system"); // ratbite
         SubscribeLocalEvent<PrototypesReloadedEventArgs>(OnProtoReload);
         SetupTrackerLookup();
     }
@@ -59,7 +44,12 @@ public abstract partial class SharedJobSystem : EntitySystem
         // This breaks if you have N trackers to 1 JobId but future concern.
         foreach (var job in _prototypes.EnumeratePrototypes<JobPrototype>())
         {
-            _inverseTrackerLookup.Add(job.PlayTimeTracker, job.ID);
+            // Ratbite: add log when overriding play time trackers
+            if (_inverseTrackerLookup.TryGetValue(job.PlayTimeTracker, out var jobId))
+            {
+                _sawmill.Warning($"Overriding playTimeTracker {job.PlayTimeTracker} (Previous value {jobId} new value {job.ID})");
+            }
+            _inverseTrackerLookup[job.PlayTimeTracker] = job.ID;
         }
     }
 
@@ -71,7 +61,8 @@ public abstract partial class SharedJobSystem : EntitySystem
     public string GetJobPrototype(string trackerProto)
     {
         DebugTools.Assert(_prototypes.HasIndex<PlayTimeTrackerPrototype>(trackerProto));
-        return _inverseTrackerLookup[trackerProto];
+        // _BRatbite: avoid crashing prefs load if a tracker has no corresponding job (e.g. after a job removal/rename)
+        return _inverseTrackerLookup.GetValueOrDefault(trackerProto, string.Empty);
     }
 
     /// <summary>
@@ -185,7 +176,7 @@ public abstract partial class SharedJobSystem : EntitySystem
         prototype = null;
         MindTryGetJobId(mindId, out var protoId);
 
-        return (_prototypes.TryIndex<JobPrototype>(protoId, out prototype) || prototype is not null);
+        return _prototypes.Resolve(protoId, out prototype) || prototype is not null;
     }
 
     public bool MindTryGetJobId(

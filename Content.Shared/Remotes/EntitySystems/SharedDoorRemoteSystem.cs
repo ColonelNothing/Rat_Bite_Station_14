@@ -1,51 +1,77 @@
-// SPDX-FileCopyrightText: 2024 Jake Huxell <JakeHuxell@pm.me>
-// SPDX-FileCopyrightText: 2024 Plykiya <58439124+Plykiya@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2024 Plykiya <plykiya@protonmail.com>
-// SPDX-FileCopyrightText: 2025 Aiden <28298836+Aidenkrz@users.noreply.github.com>
-//
 // SPDX-License-Identifier: MIT
 
+using Content.Shared.Examine;
+using Content.Shared.Interaction;
 using Content.Shared.Popups;
-using Content.Shared.Interaction.Events;
+using Content.Shared.Power.EntitySystems;
 using Content.Shared.Remotes.Components;
+using Robust.Shared.Serialization;
+using Robust.Shared.Timing;
 
 namespace Content.Shared.Remotes.EntitySystems;
 
+// Ratbite: This was refactored to remove the hard coding on doors and
+// make it more generic using an event. This is to allow other
+// machines like lathes and vending machines to be affected by the
+// remote too
 public abstract class SharedDoorRemoteSystem : EntitySystem
 {
-    [Dependency] protected readonly SharedPopupSystem Popup = default!;
+    [Dependency] private readonly ExamineSystemShared _examine = default!;
+    [Dependency] private readonly SharedPowerReceiverSystem _powerReceiver = default!;
+    [Dependency] private readonly SharedPopupSystem _popup = default!;
+    [Dependency] protected readonly IGameTiming Timing = default!;
+
 
     public override void Initialize()
     {
-        SubscribeLocalEvent<DoorRemoteComponent, UseInHandEvent>(OnInHandActivation);
+        SubscribeLocalEvent<DoorRemoteComponent, DoorRemoteModeChangeMessage>(OnDoorRemoteModeChange);
+        SubscribeLocalEvent<DoorRemoteComponent, BeforeRangedInteractEvent>(OnBeforeInteract);
     }
 
-    private void OnInHandActivation(Entity<DoorRemoteComponent> entity, ref UseInHandEvent args)
+    private void OnDoorRemoteModeChange(Entity<DoorRemoteComponent> ent, ref DoorRemoteModeChangeMessage args)
     {
-        string switchMessageId;
-        switch (entity.Comp.Mode)
-        {
-            case OperatingMode.OpenClose:
-                entity.Comp.Mode = OperatingMode.ToggleBolts;
-                switchMessageId = "door-remote-switch-state-toggle-bolts";
-                break;
-
-            // Skip toggle bolts mode and move on from there (to emergency access)
-            case OperatingMode.ToggleBolts:
-                entity.Comp.Mode = OperatingMode.ToggleEmergencyAccess;
-                switchMessageId = "door-remote-switch-state-toggle-emergency-access";
-                break;
-
-            // Skip ToggleEmergencyAccess mode and move on from there (to door toggle)
-            case OperatingMode.ToggleEmergencyAccess:
-                entity.Comp.Mode = OperatingMode.OpenClose;
-                switchMessageId = "door-remote-switch-state-open-close";
-                break;
-            default:
-                throw new InvalidOperationException(
-                    $"{nameof(DoorRemoteComponent)} had invalid mode {entity.Comp.Mode}");
-        }
-        Dirty(entity);
-        Popup.PopupClient(Loc.GetString(switchMessageId), entity, args.User);
+        ent.Comp.Mode = args.Mode;
+        Dirty(ent);
     }
+
+    private void OnBeforeInteract(Entity<DoorRemoteComponent> entity, ref BeforeRangedInteractEvent args)
+    {
+        if (!Timing.IsFirstTimePredicted)
+            return;
+        if (args.Target is null || args.Handled) return;
+        if (!_examine.InRangeUnOccluded(args.User,
+                args.Target.Value,
+                SharedInteractionSystem.MaxRaycastRange,
+                                        null)) return;
+
+        var accessTarget = args.Used;
+        // This covers the accesses the REMOTE has, and is not effected by the user's ID card.
+        if (entity.Comp.IncludeUserAccess) // Allows some door remotes to inherit the user's access.
+        {
+            accessTarget = args.User;
+            // This covers the accesses the USER has, which always includes the remote's access since holding a remote acts like holding an ID card.
+        }
+
+        if (!_powerReceiver.IsPowered(args.Target.Value))
+        {
+            _popup.PopupClient(Loc.GetString("door-remote-no-power"), args.User, args.User);
+            return;
+        }
+
+        var ev = new DoorRemoteUsedEvent(args.Target.Value, args.User, entity, entity.Comp.Mode, accessTarget);
+        RaiseLocalEvent(args.Target.Value, ref ev);
+        args.Handled = ev.Handled;
+    }
+}
+
+[Serializable, NetSerializable]
+public sealed class DoorRemoteModeChangeMessage : BoundUserInterfaceMessage
+{
+    public OperatingMode Mode;
+}
+
+[Serializable, NetSerializable]
+public enum DoorRemoteUiKey : byte
+{
+    Key
 }

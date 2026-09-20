@@ -11,13 +11,6 @@
     rules: ghost-role-information-nonantagonist-rules
     raffle:
       settings: short
-    requirements:
-    - !type:DepartmentTimeRequirement
-       department: Security
-       time: 36000 # ten hours
-    - !type:DepartmentTimeRequirement
-      department: Command
-      time: 18000 # five hours
   - type: GhostCharacterSpawner
     components:
     - type: IdBind
@@ -25,10 +18,9 @@
     - type: AutoImplant
       implants: [ FreedomImplant, RadioImplantCentcomm, NutrimentPumpImplant, StypticStimulatorImplant, BluespaceLifelineImplant ] # bluespace implant because unrobust ERT keep giving antags/selfantags free loot
     - type: MindShield
-    - type: CombatTrained
 
 # ERT leader
-      
+
 - type: entity
   parent: BaseERTReinforcement
   id: ERTLeaderReinforcement
@@ -59,6 +51,17 @@
     components:
     - type: Loadout
       prototypes: [ ERTLeaderGearEVA ]
+      roleLoadout: [ RoleSurvivalEVA ]
+
+- type: entity
+  parent: ERTLeaderReinforcementEVA
+  id: ERTLeaderReinforcementArmed
+  suffix: ERT Leader, Armed EVA
+  components:
+  - type: GhostCharacterSpawner
+    components:
+    - type: Loadout
+      prototypes: [ ERTLeaderGearArmed ]
       roleLoadout: [ RoleSurvivalEVA ]
 
 # ERT Chaplain
@@ -151,7 +154,6 @@
   components:
   - type: GhostCharacterSpawner
     components:
-    - type: CombatTrained
     - type: Loadout
       prototypes: [ ERTEngineerGearEVA ]
       roleLoadout: [ RoleSurvivalEVA ]
@@ -202,16 +204,8 @@
     rules: ghost-role-information-nonantagonist-rules
     raffle:
       settings: short
-    requirements:
-    - !type:DepartmentTimeRequirement
-       department: Medical
-       time: 36000 # ten hours
-    - !type:DepartmentTimeRequirement
-      department: Security
-      time: 18000 # five hours
   - type: GhostCharacterSpawner
     components:
-    - type: CombatTrained
     - type: Loadout
       prototypes: [ ERTMedicalGear ]
       roleLoadout: [ RoleSurvivalExtended ]
@@ -239,16 +233,8 @@
     rules: ghost-role-information-nonantagonist-rules
     raffle:
       settings: short
-    requirements:
-    - !type:DepartmentTimeRequirement
-      department: Security
-      time: 36000 # ten hours
-    - !type:DepartmentTimeRequirement
-      department: Command
-      time: 18000 # five hours
   - type: GhostCharacterSpawner
     components:
     - type: Loadout
       prototypes: [ CBURNGear ]
       roleLoadout: [ RoleSurvivalEVA ]
-

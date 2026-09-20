@@ -1,10 +1,3 @@
-// SPDX-FileCopyrightText: 2023 Ed <96445749+TheShuEd@users.noreply.github.com>
-// SPDX-FileCopyrightText: 2023 metalgearsloth <comedian_vs_clown@hotmail.com>
-// SPDX-FileCopyrightText: 2024 Pieter-Jan Briers <pieterjan.briers+git@gmail.com>
-// SPDX-FileCopyrightText: 2024 Piras314 <p1r4s@proton.me>
-// SPDX-FileCopyrightText: 2024 Tayrtahn <tayrtahn@gmail.com>
-// SPDX-FileCopyrightText: 2025 Aiden <28298836+Aidenkrz@users.noreply.github.com>
-//
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 using System.Numerics;
@@ -105,9 +98,23 @@ public sealed class ChasingWalkSystem : VirtualController
         var pos2 = _transform.GetWorldPosition(component.ChasingEntity.Value);
 
         var delta = pos2 - pos1;
-        var speed = delta.Length() > 0 ? delta.Normalized() * component.Speed : Vector2.Zero;
+        var speed = delta.LengthSquared() > 0 ? delta.Normalized() * component.Speed * (component.Reverse ? -1 : 1) : Vector2.Zero;
 
         _physics.SetLinearVelocity(uid, speed);
         _physics.SetBodyStatus(uid, physics, BodyStatus.InAir); //If this is not done, from the explosion up close, the tesla will "Fall" to the ground, and almost stop moving.
+
+        if (component.RotateWithImpulse)
+        {
+            var ang = speed.ToAngle() + Angle.FromDegrees(90); // we want "Up" to be forward, bullet convention.
+            _transform.SetWorldRotation(uid, ang + component.RotationAngleOffset);
+        }
+    }
+
+    // Ratbite
+    public bool SetReverse(Entity<ChasingWalkComponent?> ent, bool value)
+    {
+        if (!Resolve(ent.Owner, ref ent.Comp)) return false;
+        ent.Comp.Reverse = value;
+        return true;
     }
 }
