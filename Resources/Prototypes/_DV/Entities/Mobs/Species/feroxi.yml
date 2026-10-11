@@ -66,6 +66,9 @@
       - map: [ "gloves" ]
       - map: [ "shoes" ]
       - map: [ "ears" ]
+      - map: [ "enum.HumanoidVisualLayers.HeadSide" ]
+      - map: [ "enum.HumanoidVisualLayers.HeadTop" ]
+      - map: [ "enum.HumanoidVisualLayers.Tail" ]
       - map: [ "outerClothing" ]
       - map: [ "belt" ] # Goob
       - map: [ "eyes" ]
@@ -74,9 +77,6 @@
       - map: [ "enum.HumanoidVisualLayers.FacialHair" ]
       - map: [ "maskalt" ] # Goob - alt mask gooblayer below hair
       - map: [ "enum.HumanoidVisualLayers.Hair" ]
-      - map: [ "enum.HumanoidVisualLayers.HeadSide" ]
-      - map: [ "enum.HumanoidVisualLayers.HeadTop" ]
-      - map: [ "enum.HumanoidVisualLayers.Tail" ]
       - map: [ "mask" ]
       - map: [ "head" ]
       - map: [ "pocket1" ]
